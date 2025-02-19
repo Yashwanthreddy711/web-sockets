@@ -40,3 +40,8 @@ personalCodeVideoButton.addEventListener('click',()=>{
  
 });
 
+//eventlisteners for video call buttons
+
+
+const micButton = document.getElementById('mic_button')
+micButton.addEventListener('click',)

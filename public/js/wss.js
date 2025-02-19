@@ -18,6 +18,7 @@ export const registerSocketEvents=(socket)=>{
         webRTCHandler.handlePreOfferAnswer(data);
     });
     socket.on('webRTC-signaling',data=>{
+        console.log("webRTC-signaling came","data type",data);
       switch(data.type){
         case constants.webRTCSignaling.OFFER:
           webRTCHandler.handleWebRTCOffer(data);
