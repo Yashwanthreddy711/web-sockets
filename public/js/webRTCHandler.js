@@ -7,6 +7,7 @@ import * as store from "./store.js";
 
 let connectedUserDetails;
 let peerConnection;
+let dataChannel;
 const defaultConstraints = {
     audio: true,
     video: true
@@ -36,6 +37,21 @@ export const getLocalPreview = () => {
 const createPeerConnection = () => {
 
      peerConnection= new RTCPeerConnection(configuration);
+     //create data channel for text messages
+        dataChannel=peerConnection.createDataChannel("chat");
+        peerConnection.ondatachannel=(event)=>{
+           const  dataChannel=event.channel;  
+           dataChannel.onopen=()=>{
+            console.log("peer connection is ready to recieve datachannel messages");
+           }
+           dataChannel.onmessage =(event)=>{
+            const message=JSON.parse(event.data);
+            ui.appendMessage(message);
+           }
+
+        }
+
+
 
     peerConnection.onicecandidate=(event)=>{
         console.log("getting ice candidates from stun server",event);
@@ -72,6 +88,10 @@ const createPeerConnection = () => {
 
 }
 
+export const sendMessageUsingDataChannel=(message)=>{
+    const stringifiedMessage=JSON.stringify(message);
+    dataChannel.send(stringifiedMessage);
+}
 export const sendPreOffer = (callType, calleePersonalCode) => {
 
     connectedUserDetails={
@@ -188,4 +208,47 @@ export const handleWebRTCCandidate=async(data)=>{
         console.error("Error adding received ice candidate", err);
     }
 
+}
+let screenSharingStream;
+export const switchBetweenCameraAndScreenSharing=async (screenSharingActive)=>{
+    if(screenSharingActive){
+        const localStream=store.getState().localStream;
+        const sender=peerConnection.getSenders().find((s)=>s.track.kind===localStream.getVideoTracks()[0].kind);
+        if(sender){
+            await sender.replaceTrack(localStream.getVideoTracks()[0]);
+        }
+        //stop the screen sharing stream
+        store.getState().screenSharingStream.getTracks().forEach((track)=>{
+            track.stop();
+        });
+
+        store.setScreenSharingActive(!screenSharingActive);
+        ui.updateLocalVideo(localStream);
+    }
+    else{
+
+        try{
+            screenSharingStream=await navigator.mediaDevices.getDisplayMedia({
+                video:true
+            });
+            store.setScreenSharingStream(screenSharingStream);
+            
+            //replace the track the sender is sending 
+            const sender=peerConnection.getSenders().find((s)=>s.track.kind===screenSharingStream.getVideoTracks()[0].kind);
+
+            if(sender){
+                await sender.replaceTrack(screenSharingStream.getVideoTracks()[0]);
+            }
+
+
+            store.setScreenSharingActive(!screenSharingActive);
+
+            ui.updateLocalVideo(screenSharingStream);
+            
+        }
+        catch(error){
+            console.error("Error accessing display media.", error);
+        }
+
+    }
 }
