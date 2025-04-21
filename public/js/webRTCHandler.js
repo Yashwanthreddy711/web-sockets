@@ -1,4 +1,3 @@
-
 import * as wss from "./wss.js";
 import * as constants from "./constants.js";
 import * as ui from "./ui.js";
@@ -251,4 +250,43 @@ export const switchBetweenCameraAndScreenSharing=async (screenSharingActive)=>{
         }
 
     }
+}
+export const handleHangUp=()=>{
+    if (connectedUserDetails) {
+        const data = {
+            connectedUserSocketId: connectedUserDetails.socketId
+        };
+        wss.sendUserHangedUp(data);
+        closePeerConnectionAndResetState();
+    }
+}
+export const handleConnectedUserHangedUp=()=>{
+    closePeerConnectionAndResetState();     
+}
+
+const closePeerConnectionAndResetState=()=>{
+    // Close peer connection if it exists
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+
+    // Reset local stream settings if it was a video call
+    if (connectedUserDetails && (connectedUserDetails.callType === constants.callType.VIDEO_PERSONAL_CODE || 
+        connectedUserDetails.callType === constants.callType.VIDEO_STRANGER)) {
+        const localStream = store.getState().localStream;
+        if (localStream) {
+            localStream.getTracks().forEach(track => {
+                track.enabled = true;  // Reset track state
+            });
+        }
+    }
+
+    // Update UI
+    if (connectedUserDetails) {
+        ui.updateUIAfterHangUp(connectedUserDetails.callType);
+    }
+
+    // Reset connected user details
+    connectedUserDetails = null;
 }

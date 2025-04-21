@@ -55,6 +55,14 @@ io.on('connection',(socket)=>{
             io.to(connectedUserSocketId).emit('webRTC-signaling',data); 
         }
     });
+    socket.on('user-hanged-up',(data)=>{
+        const {connectedUserSocketId}=data;
+        const connectedUser=connectedUsers.find(socketId=>socketId===connectedUserSocketId);
+        if(connectedUser){ 
+            io.to(connectedUserSocketId).emit('user-hanged-up'); 
+        }
+    });
+
     socket.on('disconnect',()=>{
         connectedUsers=connectedUsers.filter(socketId=>socketId!==socket.id);
     });

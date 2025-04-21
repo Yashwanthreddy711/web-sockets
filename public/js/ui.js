@@ -1,6 +1,6 @@
-
 import * as constants from './constants.js';
 import * as elements from './elements.js';
+import * as recordingUtils from './recordingUtils.js';
 export const updatePersonalCode = (personalCode) => {   
     const personalCodeParagraph = document.getElementById('personal_code_paragraph');
    personalCodeParagraph.innerText=personalCode;
@@ -141,12 +141,87 @@ export const clearMessenger=()=>{
     const messagesContainer = document.getElementById('messages_container');
     messagesContainer.querySelectorAll('*').forEach(message => message.remove());
 }
+export const showRecordingPanel=()=>{
+    const recordingButtons=document.getElementById('video_recording_buttons_container');
+    showElement(recordingButtons);
+    //hide start recording button if it is active
+    const startRecordingButton=document.getElementById('start_recording_button');
+    hideElement(startRecordingButton)
+
+   
+}
+export const resetRecordingButtons=()=>{
+    const startRecordingButton=document.getElementById('start_recording_button');
+    const recordingButtons=document.getElementById('video_recording_buttons_container');
+    hideElement(recordingButtons);
+    showElement(startRecordingButton);
+   
+}
+export const switchRecordingButtons=(switchForResumeButton= false)=>{
+    const resumeButton=document.getElementById('resume_recording_button');
+    const pauseButton=document.getElementById('pause_recording_button');
+    if(switchForResumeButton){
+        hideElement(pauseButton);
+        showElement(resumeButton);
+    }else{
+        hideElement(resumeButton);
+        showElement(pauseButton);
+    }
+    
+}
+
+//ui after hanged up
+
+export const updateUIAfterHangUp = (callType) => {
+    // First, clean up the video elements
+    const remoteVideo = document.getElementById('remote_video');
+    const placeholder = document.getElementById('video_placeholder');
+    
+    if (remoteVideo) {
+        remoteVideo.srcObject = null;  // Clear the video stream
+        hideElement(remoteVideo);
+    }
+    
+    if (placeholder) {
+        showElement(placeholder);
+    }
+
+    // Clean up call buttons
+    if (callType === constants.callType.VIDEO_PERSONAL_CODE || callType === constants.callType.VIDEO_STRANGER) {
+        const callButtons = document.getElementById('call_buttons');
+        if (callButtons) {
+            hideElement(callButtons);
+        }
+    } else {
+        const chatCallButtons = document.getElementById('finish_chat_button_container');
+        if (chatCallButtons) {
+            hideElement(chatCallButtons);
+        }
+    }
+
+    // Clean up message input
+    const newMessageInput = document.getElementById('new_message');
+    if (newMessageInput) {
+        hideElement(newMessageInput);
+        clearMessenger();
+    }
+
+    // Reset camera and mic buttons
+    updateMicButton(false);
+    updateCameraButton(false);
+
+    // Make sure to remove any remaining dialogs
+    removeAllDialogs();
+
+    // Enable dashboard last to ensure all cleanup is done
+    enableDashboard();
+}
 
 //ui helper functions
 
-const enableDashboard= () => {
-    const dashboardBlocker=document.getElementById('dashboard_blur');
-    if(!dashboardBlocker.classList.contains('display_none')){
+const enableDashboard = () => {
+    const dashboardBlocker = document.getElementById('dashboard_blur');
+    if (dashboardBlocker) {
         dashboardBlocker.classList.add('display_none');
     }
 }
